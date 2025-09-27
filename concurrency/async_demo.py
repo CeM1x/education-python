@@ -1,40 +1,44 @@
-import asyncio
+import threading
 import time
 
 
-async def count_time(sec):
-    await asyncio.sleep(sec)
-    print(f"Task {sec} done after {sec} seconds")
+def timer(func):
+    def wrapper():
+        start = time.time()
+        func()
+        print(f"Total execute time: {time.time() - start} sec\n")
+    return wrapper
 
 
-async def async_demo():
-    start = time.time()
-    async with asyncio.TaskGroup() as tg:
-        for i in range(1,16):
-            tg.create_task(count_time(i))
-    print(f"Async total execute time: {time.time() - start}")
-
-
-def waiting(sec):
+def count_time(sec):
     time.sleep(sec)
     print(f"Task {sec} done after {sec} seconds")
 
 
+@timer
+def threading_demo():
+    threads = []
+    for i in range(1,5):
+        t = threading.Thread(target=count_time, args=(i,))
+        t.start()
+        threads.append(t)
+
+    for t in threads:
+        t.join()
+
+@timer
 def sync_demo():
-    start = time.time()
-    for i in range(1,16):
-        waiting(i)
-    print(f"Sync total execute time: {time.time() - start}\n")
+    for i in range(1,5):
+        count_time(i)
 
 
-async def main():
+
+def main():
     print("--SYNCHRONOUS VERSION--")
     sync_demo()
-
-    print("--ASYNCHRONOUS VERSION--")
-    await async_demo()
-
+    print("--THREADING VERSION--")
+    threading_demo()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
